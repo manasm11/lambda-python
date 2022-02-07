@@ -2,25 +2,10 @@
 
 main() {
     case $1 in
-      install) install ;;
       reset) reset ;;
-      zip) install && zipit ;;
+      zipit) zipit ;;
       *) help ;;
     esac
-}
-
-install(){
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-
-    while read LINE; do
-        DEP=$(echo $LINE | cut -d'=' -f1)
-        DEP=$(echo $DEP | cut -d'<' -f1)
-        DEP=$(echo $DEP | cut -d'>' -f1)
-        cp -r venv/lib/python3.8/site-packages/${DEP} .
-    done < requirements.txt
-    rm -rf venv
 }
 
 reset(){
@@ -34,7 +19,26 @@ reset(){
 }
 
 zipit(){
-    zip -r ${PWD##*/}.zip * --exclude run requirements.txt
+    echo "Creating temperory virtual environment..."
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install --upgrade pip > /dev/null
+    echo "Installing dependencies..."
+    pip install -r requirements.txt > /dev/null
+
+    while read LINE; do
+        DEP=$(echo $LINE | cut -d'=' -f1)
+        DEP=$(echo $DEP | cut -d'<' -f1)
+        DEP=$(echo $DEP | cut -d'>' -f1)
+        cp -r venv/lib/python3.8/site-packages/${DEP} .
+    done < requirements.txt
+    rm -rf venv
+    ZIP_FILENAME=${PWD##*/}.zip
+    echo "Creating zip '${ZIP_FILENAME}'..."
+    zip -r ${ZIP_FILENAME} * --exclude run requirements.txt
+    echo
+    echo "Created zip file..."
+    du -h ${ZIP_FILENAME}
 }
 
 help() {
